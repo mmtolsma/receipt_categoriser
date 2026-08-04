@@ -167,16 +167,14 @@ export function StatementMonthSection({
               Graph view
             </Button>
           </div>
-          {viewMode === "date" ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleExportMonth}
-            >
-              Export CSV
-            </Button>
-          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportMonth}
+          >
+            Export CSV
+          </Button>
         </div>
       </div>
 
