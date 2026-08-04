@@ -1,4 +1,5 @@
 import { mapBankCategory } from "@/backend/statements/map-bank-category";
+import { mapDescriptionCategory } from "@/backend/statements/map-description-category";
 import type { StatementTransaction } from "@/backend/statements/statement-transaction";
 
 const REQUIRED_COLUMNS = [
@@ -121,6 +122,7 @@ export async function processStatement(file: File) {
     const moneyIn = parseNumber(values[headerIndexMap.get("Money In") ?? -1]);
     const moneyOut = parseNumber(values[headerIndexMap.get("Money Out") ?? -1]);
     const fee = parseNumber(values[headerIndexMap.get("Fee") ?? -1]);
+    const descriptionCategory = mapDescriptionCategory(originalDescription);
 
     return {
       row_number: rowIndex + 1,
@@ -131,7 +133,7 @@ export async function processStatement(file: File) {
       money_out: moneyOut,
       fee,
       amount: normalizeAmount({ moneyIn, moneyOut, fee }),
-      mapped_category: mapBankCategory(bankCategory),
+      mapped_category: descriptionCategory ?? mapBankCategory(bankCategory),
     };
   });
 
