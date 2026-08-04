@@ -1,5 +1,8 @@
+"use client";
+
 import type { AppCategory } from "@/backend/statements/categories";
 import type { StatementTransaction } from "@/backend/statements/statement-transaction";
+import { Button } from "@/components/ui/button";
 import { CategorySelect } from "@/frontend/home/category-select";
 
 type StatementMonthSectionProps = {
@@ -32,6 +35,14 @@ function formatAmount(amount: number) {
     currency: "ZAR",
     minimumFractionDigits: 2,
   }).format(amount);
+}
+
+function escapeCsvValue(value: string) {
+  if (value.includes('"') || value.includes(",") || value.includes("\n")) {
+    return `"${value.replaceAll('"', '""')}"`;
+  }
+
+  return value;
 }
 
 export function StatementMonthSection({
@@ -79,13 +90,61 @@ export function StatementMonthSection({
     (total, transaction) => total + transaction.amount,
     0
   );
+  const uncategorisedCount = regularTransactions.filter(
+    (transaction) => transaction.mapped_category === "Uncategorised"
+  ).length;
+
+  function handleExportMonth() {
+    if (uncategorisedCount > 0) {
+      window.alert(
+        `${uncategorisedCount} row${
+          uncategorisedCount === 1 ? " is" : "s are"
+        } still uncategorised in ${formatMonthLabel(monthKey)}. Export will continue.`
+      );
+    }
+
+    const csvRows = [
+      ["Date", "Original Description", "Category", "Amount"],
+      ...(consolidatedFeesAmount !== 0
+        ? [["", "Consolidated fees", "", consolidatedFeesAmount.toString()]]
+        : []),
+      ...interestTransactions.map((transaction) => [
+        formatDate(transaction.transaction_date),
+        "Interest received",
+        "",
+        transaction.amount.toString(),
+      ]),
+      ...regularTransactions.map((transaction) => [
+        formatDate(transaction.transaction_date),
+        transaction.original_description,
+        transaction.mapped_category,
+        transaction.amount.toString(),
+      ]),
+    ];
+
+    const csvContent = csvRows
+      .map((row) => row.map((value) => escapeCsvValue(value)).join(","))
+      .join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = downloadUrl;
+    link.download = `statement-${monthKey}.csv`;
+    link.click();
+
+    URL.revokeObjectURL(downloadUrl);
+  }
 
   return (
     <section className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50/50">
-      <div className="border-b border-zinc-200 bg-zinc-100/80 px-6 py-4 text-left">
+      <div className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-zinc-100/80 px-6 py-4 text-left">
         <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700">
           {formatMonthLabel(monthKey)}
         </h3>
+        <Button type="button" variant="outline" size="sm" onClick={handleExportMonth}>
+          Export CSV
+        </Button>
       </div>
 
       <div className="overflow-x-auto">
