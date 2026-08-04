@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { UploadDialog } from "@/frontend/home/upload-dialog";
 
 export function HomePage() {
   return (
@@ -7,7 +7,7 @@ export function HomePage() {
         <h1 className="text-4xl font-semibold tracking-tight text-zinc-950">
           Let&apos;s Categorise Those Receipts!
         </h1>
-        <Button type="button">Upload receipts</Button>
+        <UploadDialog />
       </section>
     </main>
   );
