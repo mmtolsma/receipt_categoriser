@@ -1,8 +1,12 @@
 "use client";
 
+import { useState } from "react";
+
 import type { AppCategory } from "@/backend/statements/categories";
 import type { StatementTransaction } from "@/backend/statements/statement-transaction";
+import { buildCategoryChartData } from "@/frontend/home/build-category-chart-data";
 import { Button } from "@/components/ui/button";
+import { CategoryBarChart } from "@/frontend/home/category-bar-chart";
 import { CategorySelect } from "@/frontend/home/category-select";
 
 type StatementMonthSectionProps = {
@@ -50,6 +54,7 @@ export function StatementMonthSection({
   transactions,
   onCategoryChange,
 }: StatementMonthSectionProps) {
+  const [viewMode, setViewMode] = useState<"date" | "graph">("date");
   const interestTransactions = transactions
     .filter((transaction) => transaction.mapped_category === "Interest")
     .toSorted((leftTransaction, rightTransaction) =>
@@ -90,6 +95,7 @@ export function StatementMonthSection({
     (total, transaction) => total + transaction.amount,
     0
   );
+  const chartData = buildCategoryChartData(transactions);
   const uncategorisedCount = regularTransactions.filter(
     (transaction) => transaction.mapped_category === "Uncategorised"
   ).length;
@@ -142,12 +148,47 @@ export function StatementMonthSection({
         <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700">
           {formatMonthLabel(monthKey)}
         </h3>
-        <Button type="button" variant="outline" size="sm" onClick={handleExportMonth}>
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-lg bg-white p-1 ring-1 ring-zinc-200">
+            <Button
+              type="button"
+              variant={viewMode === "date" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("date")}
+            >
+              Date view
+            </Button>
+            <Button
+              type="button"
+              variant={viewMode === "graph" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("graph")}
+            >
+              Graph view
+            </Button>
+          </div>
+          {viewMode === "date" ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleExportMonth}
+            >
+              Export CSV
+            </Button>
+          ) : null}
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
+      {viewMode === "graph" ? (
+        <div className="bg-white p-6">
+          <CategoryBarChart
+            data={chartData}
+            emptyMessage="No expense categories for this month."
+          />
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
         <table className="min-w-full table-fixed text-sm">
           <thead className="bg-white text-zinc-500">
             <tr>
@@ -233,7 +274,8 @@ export function StatementMonthSection({
             ))}
           </tbody>
         </table>
-      </div>
+        </div>
+      )}
     </section>
   );
 }

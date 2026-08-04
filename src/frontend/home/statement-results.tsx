@@ -15,26 +15,30 @@ export function StatementResults({
   const monthGroups = groupTransactionsByMonth(transactions);
 
   return (
-    <section className="w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-      <div className="border-b border-zinc-200 px-6 py-4 text-left">
-        <h2 className="text-lg font-semibold text-zinc-950">
-          Mapped statement rows
-        </h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          Review the mapped categories before export.
-        </p>
-      </div>
+    <div className="w-full space-y-6">
+      <section className="w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+        <div className="border-b border-zinc-200 px-6 py-4 text-left">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-950">
+              Mapped statement rows
+            </h2>
+            <p className="mt-1 text-sm text-zinc-600">
+              Review the mapped categories or switch a month into graph view.
+            </p>
+          </div>
+        </div>
 
-      <div className="space-y-6 p-6">
-        {monthGroups.map((monthGroup) => (
-          <StatementMonthSection
-            key={monthGroup.monthKey}
-            monthKey={monthGroup.monthKey}
-            transactions={monthGroup.transactions}
-            onCategoryChange={onCategoryChange}
-          />
-        ))}
-      </div>
-    </section>
+        <div className="space-y-6 p-6">
+          {monthGroups.map((monthGroup) => (
+            <StatementMonthSection
+              key={monthGroup.monthKey}
+              monthKey={monthGroup.monthKey}
+              transactions={monthGroup.transactions}
+              onCategoryChange={onCategoryChange}
+            />
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
