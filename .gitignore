@@ -34,6 +34,12 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# local data / exports
+*.csv
+*.db
+*.sqlite
+*.sqlite3
+
 # vercel
 .vercel
 
