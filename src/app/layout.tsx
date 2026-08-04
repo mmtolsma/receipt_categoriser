@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Receipt Categoriser",
   description:
-    "AI-assisted receipt analyser that extracts and categorises receipt items from uploaded images.",
+    "Local tool for importing bank statement CSVs and mapping transactions into your own categories.",
 };
 
 export default function RootLayout({
