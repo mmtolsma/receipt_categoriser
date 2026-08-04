@@ -1,7 +1,10 @@
+import type { AppCategory } from "@/backend/statements/categories";
 import type { StatementTransaction } from "@/backend/statements/statement-transaction";
+import { CategorySelect } from "@/frontend/home/category-select";
 
 type StatementResultsProps = {
   transactions: StatementTransaction[];
+  onCategoryChange: (rowNumber: number, category: AppCategory) => void;
 };
 
 function formatDate(value: string) {
@@ -16,13 +19,35 @@ function formatAmount(amount: number) {
   }).format(amount);
 }
 
-export function StatementResults({ transactions }: StatementResultsProps) {
+export function StatementResults({
+  transactions,
+  onCategoryChange,
+}: StatementResultsProps) {
   const feeTransactions = transactions.filter(
     (transaction) => transaction.mapped_category === "Fees"
   );
-  const nonFeeTransactions = transactions.filter(
-    (transaction) => transaction.mapped_category !== "Fees"
-  );
+  const nonFeeTransactions = transactions
+    .filter((transaction) => transaction.mapped_category !== "Fees")
+    .toSorted((leftTransaction, rightTransaction) => {
+      const leftIsUncategorised =
+        leftTransaction.mapped_category === "Uncategorised";
+      const rightIsUncategorised =
+        rightTransaction.mapped_category === "Uncategorised";
+
+      if (leftIsUncategorised !== rightIsUncategorised) {
+        return leftIsUncategorised ? -1 : 1;
+      }
+
+      const dateComparison = leftTransaction.transaction_date.localeCompare(
+        rightTransaction.transaction_date
+      );
+
+      if (dateComparison !== 0) {
+        return dateComparison;
+      }
+
+      return leftTransaction.row_number - rightTransaction.row_number;
+    });
   const consolidatedFeesAmount = feeTransactions.reduce(
     (total, transaction) => total + transaction.amount,
     0
@@ -75,7 +100,11 @@ export function StatementResults({ transactions }: StatementResultsProps) {
             {nonFeeTransactions.map((transaction) => (
               <tr
                 key={`${transaction.row_number}-${transaction.original_description}`}
-                className="border-t border-zinc-200 align-top"
+                className={
+                  transaction.mapped_category === "Uncategorised"
+                    ? "border-t border-amber-200 bg-amber-50/70 align-top"
+                    : "border-t border-zinc-200 align-top"
+                }
               >
                 <td className="px-6 py-4 text-left text-zinc-700">
                   {formatDate(transaction.transaction_date)}
@@ -87,7 +116,12 @@ export function StatementResults({ transactions }: StatementResultsProps) {
                   {transaction.bank_category}
                 </td>
                 <td className="px-6 py-4 text-left font-medium text-zinc-950">
-                  {transaction.mapped_category}
+                  <CategorySelect
+                    value={transaction.mapped_category}
+                    onChange={(category) =>
+                      onCategoryChange(transaction.row_number, category)
+                    }
+                  />
                 </td>
                 <td className="px-6 py-4 text-left text-zinc-700">
                   {formatAmount(transaction.amount)}

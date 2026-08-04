@@ -20,10 +20,10 @@ export const BANK_CATEGORY_TO_APP_CATEGORY: Record<
   "Home Maintenance": "Home",
   Garden: "Home",
   "Personal Care": "Toiletries",
-  "Sport & Hobbies": "Guilt-free",
-  "Other Personal & Family": "Guilt-free",
+  "Sport & Hobbies": "Home",
+  "Other Personal & Family": "Home",
   Licence: "Car service/stuff",
-  Holiday: "Guilt-free",
+  Holiday: "Treat",
   "Other Income": "Salary",
   Donations: "Debits",
   Transfer: "Transfer",
@@ -42,7 +42,7 @@ export const BANK_CATEGORY_TO_APP_CATEGORY: Record<
   "Home Improvements": "DIY",
   Refunds: "Salary",
   "Digital Subscriptions": "Guilt-free",
-  "Home Insurance": "Home",
+  "Home Insurance": "Debits",
   "Vehicle Maintenance": "Car service/stuff",
 };
 
