@@ -1,8 +1,12 @@
-import type { AppCategory, BankCategory } from "@/backend/statements/categories";
+import type {
+  AppCategory,
+  BankCategory,
+  StatementCategory,
+} from "@/backend/statements/categories";
 
 export const BANK_CATEGORY_TO_APP_CATEGORY: Record<
   BankCategory,
-  AppCategory
+  StatementCategory
 > = {
   Groceries: "Groceries",
   Fuel: "Petrol",
@@ -46,7 +50,7 @@ export const BANK_CATEGORY_TO_APP_CATEGORY: Record<
   "Vehicle Maintenance": "Car service/stuff",
 };
 
-export function mapBankCategory(bankCategory: string): AppCategory {
+export function mapBankCategory(bankCategory: string): StatementCategory {
   return (
     BANK_CATEGORY_TO_APP_CATEGORY[
       bankCategory as keyof typeof BANK_CATEGORY_TO_APP_CATEGORY

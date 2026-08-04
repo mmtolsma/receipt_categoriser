@@ -1,4 +1,4 @@
-import type { AppCategory } from "@/backend/statements/categories";
+import type { StatementCategory } from "@/backend/statements/categories";
 
 export type StatementTransaction = {
   row_number: number;
@@ -9,5 +9,5 @@ export type StatementTransaction = {
   money_out: number | null;
   fee: number | null;
   amount: number;
-  mapped_category: AppCategory;
+  mapped_category: StatementCategory;
 };

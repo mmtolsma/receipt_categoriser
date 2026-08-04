@@ -18,12 +18,12 @@ export const APP_CATEGORIES = [
   "Home",
   "Guilt-free",
   "Fees",
-  "Interest",
   "Transfer",
   "Uncategorised",
 ] as const;
 
 export type AppCategory = (typeof APP_CATEGORIES)[number];
+export type StatementCategory = AppCategory | "Interest";
 
 export const BANK_CATEGORIES = [
   "Groceries",
