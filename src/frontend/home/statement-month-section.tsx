@@ -8,6 +8,14 @@ import { buildCategoryChartData } from "@/frontend/home/build-category-chart-dat
 import { Button } from "@/components/ui/button";
 import { CategoryBarChart } from "@/frontend/home/category-bar-chart";
 import { CategorySelect } from "@/frontend/home/category-select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type StatementMonthSectionProps = {
   monthKey: string;
@@ -55,6 +63,7 @@ export function StatementMonthSection({
   onCategoryChange,
 }: StatementMonthSectionProps) {
   const [viewMode, setViewMode] = useState<"date" | "graph">("date");
+  const [isExportWarningOpen, setIsExportWarningOpen] = useState(false);
   const interestTransactions = transactions
     .filter((transaction) => transaction.mapped_category === "Interest")
     .toSorted((leftTransaction, rightTransaction) =>
@@ -100,15 +109,7 @@ export function StatementMonthSection({
     (transaction) => transaction.mapped_category === "Uncategorised"
   ).length;
 
-  function handleExportMonth() {
-    if (uncategorisedCount > 0) {
-      window.alert(
-        `${uncategorisedCount} row${
-          uncategorisedCount === 1 ? " is" : "s are"
-        } still uncategorised in ${formatMonthLabel(monthKey)}. Export will continue.`
-      );
-    }
-
+  function exportMonth() {
     const csvRows = [
       ["Date", "Original Description", "Category", "Amount"],
       ...(consolidatedFeesAmount !== 0
@@ -142,138 +143,179 @@ export function StatementMonthSection({
     URL.revokeObjectURL(downloadUrl);
   }
 
+  function handleExportMonth() {
+    if (uncategorisedCount > 0) {
+      setIsExportWarningOpen(true);
+      return;
+    }
+
+    exportMonth();
+  }
+
+  function handleProceedWithExport() {
+    setIsExportWarningOpen(false);
+    exportMonth();
+  }
+
   return (
-    <section className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50/50">
-      <div className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-zinc-100/80 px-6 py-4 text-left">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700">
-          {formatMonthLabel(monthKey)}
-        </h3>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 rounded-lg bg-white p-1 ring-1 ring-zinc-200">
-            <Button
-              type="button"
-              variant={viewMode === "date" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("date")}
-            >
-              Date view
-            </Button>
-            <Button
-              type="button"
-              variant={viewMode === "graph" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("graph")}
-            >
-              Graph view
-            </Button>
-          </div>
+    <>
+      <section className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50/50">
+        <div className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-zinc-100/80 px-6 py-4 text-left">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700">
+            {formatMonthLabel(monthKey)}
+          </h3>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-lg bg-white p-1 ring-1 ring-zinc-200">
+              <Button
+                type="button"
+                variant={viewMode === "date" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("date")}
+              >
+                Date view
+              </Button>
+              <Button
+                type="button"
+                variant={viewMode === "graph" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("graph")}
+              >
+                Graph view
+              </Button>
+            </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleExportMonth}
-          >
-            Export CSV
-          </Button>
+            >
+              Export CSV
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {viewMode === "graph" ? (
-        <div className="bg-white p-6">
-          <CategoryBarChart
-            data={chartData}
-            emptyMessage="No expense categories for this month."
-          />
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-        <table className="min-w-full table-fixed text-sm">
-          <thead className="bg-white text-zinc-500">
-            <tr>
-              <th className="w-36 px-6 py-3 text-left font-medium">Date</th>
-              <th className="px-6 py-3 text-left font-medium">
-                Original description
-              </th>
-              <th className="w-40 px-6 py-3 text-left font-medium">
-                Bank category
-              </th>
-              <th className="w-40 px-6 py-3 text-left font-medium">
-                Mapped category
-              </th>
-              <th className="w-32 px-6 py-3 text-left font-medium">Amount</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white text-left">
-            {consolidatedFeesAmount !== 0 ? (
-              <tr className="border-t border-zinc-200 bg-zinc-50/80 align-top">
-                <td className="px-6 py-4 text-left text-zinc-500">-</td>
-                <td className="px-6 py-4 text-left font-medium text-zinc-950">
-                  Consolidated fees
-                </td>
-                <td className="px-6 py-4 text-left text-zinc-500">-</td>
-                <td className="px-6 py-4 text-left font-medium text-zinc-950">
-                  -
-                </td>
-                <td className="px-6 py-4 text-left font-medium text-zinc-950">
-                  {formatAmount(consolidatedFeesAmount)}
-                </td>
-              </tr>
-            ) : null}
-            {interestTransactions.map((transaction) => (
-              <tr
-                key={`${transaction.row_number}-${transaction.original_description}`}
-                className="border-t border-zinc-200 bg-zinc-50/80 align-top"
-              >
-                <td className="px-6 py-4 text-left text-zinc-700">
-                  {formatDate(transaction.transaction_date)}
-                </td>
-                <td className="px-6 py-4 text-left font-medium text-zinc-950">
-                  Interest received
-                </td>
-                <td className="px-6 py-4 text-left text-zinc-500">-</td>
-                <td className="px-6 py-4 text-left font-medium text-zinc-950">
-                  -
-                </td>
-                <td className="px-6 py-4 text-left font-medium text-zinc-950">
-                  {formatAmount(transaction.amount)}
-                </td>
-              </tr>
-            ))}
-            {regularTransactions.map((transaction) => (
-              <tr
-                key={`${transaction.row_number}-${transaction.original_description}`}
-                className={
-                  transaction.mapped_category === "Uncategorised"
-                    ? "border-t border-amber-200 bg-amber-50/70 align-top"
-                    : "border-t border-zinc-200 align-top"
-                }
-              >
-                <td className="px-6 py-4 text-left text-zinc-700">
-                  {formatDate(transaction.transaction_date)}
-                </td>
-                <td className="px-6 py-4 text-left text-zinc-950">
-                  {transaction.original_description}
-                </td>
-                <td className="px-6 py-4 text-left text-zinc-700">
-                  {transaction.bank_category}
-                </td>
-                <td className="px-6 py-4 text-left font-medium text-zinc-950">
-                  <CategorySelect
-                    value={transaction.mapped_category}
-                    onChange={(category) =>
-                      onCategoryChange(transaction.row_number, category)
+        {viewMode === "graph" ? (
+          <div className="bg-white p-6">
+            <CategoryBarChart
+              data={chartData}
+              emptyMessage="No expense categories for this month."
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-fixed text-sm">
+              <thead className="bg-white text-zinc-500">
+                <tr>
+                  <th className="w-36 px-6 py-3 text-left font-medium">Date</th>
+                  <th className="px-6 py-3 text-left font-medium">
+                    Original description
+                  </th>
+                  <th className="w-40 px-6 py-3 text-left font-medium">
+                    Bank category
+                  </th>
+                  <th className="w-40 px-6 py-3 text-left font-medium">
+                    Mapped category
+                  </th>
+                  <th className="w-32 px-6 py-3 text-left font-medium">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white text-left">
+                {consolidatedFeesAmount !== 0 ? (
+                  <tr className="border-t border-zinc-200 bg-zinc-50/80 align-top">
+                    <td className="px-6 py-4 text-left text-zinc-500">-</td>
+                    <td className="px-6 py-4 text-left font-medium text-zinc-950">
+                      Consolidated fees
+                    </td>
+                    <td className="px-6 py-4 text-left text-zinc-500">-</td>
+                    <td className="px-6 py-4 text-left font-medium text-zinc-950">
+                      -
+                    </td>
+                    <td className="px-6 py-4 text-left font-medium text-zinc-950">
+                      {formatAmount(consolidatedFeesAmount)}
+                    </td>
+                  </tr>
+                ) : null}
+                {interestTransactions.map((transaction) => (
+                  <tr
+                    key={`${transaction.row_number}-${transaction.original_description}`}
+                    className="border-t border-zinc-200 bg-zinc-50/80 align-top"
+                  >
+                    <td className="px-6 py-4 text-left text-zinc-700">
+                      {formatDate(transaction.transaction_date)}
+                    </td>
+                    <td className="px-6 py-4 text-left font-medium text-zinc-950">
+                      Interest received
+                    </td>
+                    <td className="px-6 py-4 text-left text-zinc-500">-</td>
+                    <td className="px-6 py-4 text-left font-medium text-zinc-950">
+                      -
+                    </td>
+                    <td className="px-6 py-4 text-left font-medium text-zinc-950">
+                      {formatAmount(transaction.amount)}
+                    </td>
+                  </tr>
+                ))}
+                {regularTransactions.map((transaction) => (
+                  <tr
+                    key={`${transaction.row_number}-${transaction.original_description}`}
+                    className={
+                      transaction.mapped_category === "Uncategorised"
+                        ? "border-t border-amber-200 bg-amber-50/70 align-top"
+                        : "border-t border-zinc-200 align-top"
                     }
-                  />
-                </td>
-                <td className="px-6 py-4 text-left text-zinc-700">
-                  {formatAmount(transaction.amount)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
-      )}
-    </section>
+                  >
+                    <td className="px-6 py-4 text-left text-zinc-700">
+                      {formatDate(transaction.transaction_date)}
+                    </td>
+                    <td className="px-6 py-4 text-left text-zinc-950">
+                      {transaction.original_description}
+                    </td>
+                    <td className="px-6 py-4 text-left text-zinc-700">
+                      {transaction.bank_category}
+                    </td>
+                    <td className="px-6 py-4 text-left font-medium text-zinc-950">
+                      <CategorySelect
+                        value={transaction.mapped_category}
+                        onChange={(category) =>
+                          onCategoryChange(transaction.row_number, category)
+                        }
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-left text-zinc-700">
+                      {formatAmount(transaction.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <Dialog open={isExportWarningOpen} onOpenChange={setIsExportWarningOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Uncategorised rows</DialogTitle>
+            <DialogDescription>
+              {uncategorisedCount} row
+              {uncategorisedCount === 1 ? " is" : "s are"} still uncategorised in{" "}
+              {formatMonthLabel(monthKey)}. Export will continue if you proceed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsExportWarningOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleProceedWithExport}>
+              Proceed
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
