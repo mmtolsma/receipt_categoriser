@@ -5,7 +5,6 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -13,11 +12,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { XIcon } from "lucide-react";
+import { LoaderCircleIcon, XIcon } from "lucide-react";
 
-export function UploadDialog() {
+type UploadDialogProps = {
+  onProcessingComplete: (fileName: string) => void;
+};
+
+export function UploadDialog({ onProcessingComplete }: UploadDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
@@ -32,8 +37,37 @@ export function UploadDialog() {
     }
   }
 
+  async function handleProcessReceipt() {
+    if (!selectedFile) {
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("receipt", selectedFile);
+
+      const response = await fetch("/api/receipts/process", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Receipt processing failed.");
+      }
+
+      await response.json();
+      onProcessingComplete(selectedFile.name);
+      clearSelectedFile();
+      setOpen(false);
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button type="button" />}>
         Upload receipts
       </DialogTrigger>
@@ -64,7 +98,20 @@ export function UploadDialog() {
             </div>
           ) : null}
         </div>
-        <DialogClose />
+        <Button
+          type="button"
+          onClick={handleProcessReceipt}
+          disabled={!selectedFile || isProcessing}
+        >
+          {isProcessing ? (
+            <>
+              <LoaderCircleIcon className="animate-spin" />
+              Processing...
+            </>
+          ) : (
+            "Process receipt"
+          )}
+        </Button>
       </DialogContent>
     </Dialog>
   );
